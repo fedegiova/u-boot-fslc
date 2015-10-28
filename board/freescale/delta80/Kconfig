@@ -1,0 +1,12 @@
+if TARGET_DELTA80
+
+config SYS_BOARD
+       default "delta80"
+
+config SYS_VENDOR
+       default "freescale"
+
+config SYS_CONFIG_NAME
+       default "delta80"
+
+endif
