@@ -124,6 +124,7 @@
 #if defined(CONFIG_CMD_WOL)
 #include "wol.h"
 #endif
+#include "recoveryProto.h"
 
 /** BOOTP EXTENTIONS **/
 
@@ -538,6 +539,11 @@ restart:
 #if defined(CONFIG_CMD_WOL)
 		case WOL:
 			wol_start();
+			break;
+#endif
+#if defined(CONFIG_RECOVERY_PROTO)
+		case RECOVERY:
+			RecoveryProtoInit();
 			break;
 #endif
 		default:

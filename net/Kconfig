@@ -68,4 +68,19 @@ config TFTP_WINDOWSIZE
 	  before an ack response is required.
 	  The default TFTP implementation implies a window size of 1.
 
+config RECOVERY_PROTO
+	bool "Powerboard recovery proto"
+	default n
+	help
+	  Support the recovery proto for the powerboard
+	  for arag Delta80 devices.
+	  The recovery proto performs an ack at during boot
+	  to allow the powerboard to toggle the power and workaround
+	  the bug in the initial PMIC implementation.
+
+config RECOVERY_PROTO_TIMEOUT
+	int "Powerboard recovery proto timeout"
+	default 5000
+    depends on RECOVERY_PROTO
+
 endif   # if NET

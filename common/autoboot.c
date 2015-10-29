@@ -25,6 +25,8 @@
 #ifdef is_boot_from_usb
 #include <env.h>
 #endif
+#include <net.h>
+#include "../net/recoveryProto.h"
 
 DECLARE_GLOBAL_DATA_PTR;
 
@@ -369,6 +371,28 @@ const char *bootdelay_process(void)
 		s = env_get("altbootcmd");
 	else
 		s = env_get("bootcmd");
+
+#ifdef CONFIG_RECOVERY_PROTO
+
+#ifndef	CONFIG_NET_RETRY_COUNT
+# define ARP_TIMEOUT_COUNT	5	/* # of timeouts before giving up  */
+#else
+# define ARP_TIMEOUT_COUNT	CONFIG_NET_RETRY_COUNT
+#endif
+
+    /*Check for a recovery request*/
+    int net_rv;
+    int counter = CONFIG_RECOVERY_PROTO_TIMEOUT / ( ARP_TIMEOUT_COUNT * CONFIG_ARP_TIMEOUT);
+    do{
+        net_rv = net_loop(RECOVERY);
+    }while(net_rv != 0 && net_rv != -EINTR && counter--);
+    printf("Recover status is: %d\n",RecoveryProtoShouldRecovery());
+
+    if(RecoveryProtoShouldRecovery())
+        s = env_get("bootcmd_installer");
+    if(!s)
+	    s = env_get ("bootcmd");
+#endif
 
 #if defined(is_boot_from_usb)
 	if (is_boot_from_usb() && env_get("bootcmd_mfg")) {
