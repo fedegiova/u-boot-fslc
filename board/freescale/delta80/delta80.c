@@ -286,41 +286,6 @@ int splash_screen_prepare(void)
 	return splash_source_load(default_splash_locations,
 				  ARRAY_SIZE(default_splash_locations));
 }
-//int splash_screen_prepare(void)
-//{
-//	int mmc_dev = 0;
-//	ulong offset = 9*1024*1024;
-//	ulong size = 1*1024*1024;
-//	ulong addr = 0;
-//	char *s = NULL;
-//	struct mmc *mmc = find_mmc_device(mmc_dev);
-//	uint blk_start, blk_cnt, n;
-//
-//	s = env_get("splashimage");
-//
-//	if (NULL == s) {
-//		puts("env splashimage not found!\n");
-//		return -1;
-//	}
-//	addr = simple_strtoul(s, NULL, 16);
-//
-//	if (!mmc) {
-//		printf("MMC Device %d not found\n", mmc_dev);
-//		return -1;
-//	}
-//
-//	if (mmc_init(mmc)) {
-//		puts("MMC init failed\n");
-//		return -1;
-//	}
-//
-//	blk_start = ALIGN(offset, mmc->read_bl_len) / mmc->read_bl_len;
-//	blk_cnt   = ALIGN(size, mmc->read_bl_len) / mmc->read_bl_len;
-//	n = blk_dread(mmc_get_blk_desc(mmc), blk_start, blk_cnt, (uchar*)addr);
-//	//flush_cache((ulong)addr, blk_cnt * mmc->read_bl_len);
-//
-//	return (n == blk_cnt) ? 0 : -1;
-//}
 #endif //CONFIG_SPLASH_SCREEN
 #endif //CONFIG_VIDEO_IPUV3
 
@@ -660,6 +625,10 @@ static void spl_dram_init(void)
 
 void board_init_f(ulong dummy)
 {
+    /* Keep PERST pin DOWN! to avoid briking GSM modules*/
+	SETUP_IOMUX_PAD(PAD_GPIO_5__GPIO1_IO05 | MUX_PAD_CTRL( PAD_CTL_DSE_40ohm | PAD_CTL_SPEED_MED));
+	gpio_direction_output(IMX_GPIO_NR(1,5) , 0);
+
 	/* DDR initialization */
 	spl_dram_init();
 
