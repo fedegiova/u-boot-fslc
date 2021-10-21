@@ -93,22 +93,12 @@
 
 #define CONFIG_USBD_HS
 
-/* Falcon Mode */
-#define CONFIG_SPL_FS_LOAD_ARGS_NAME	"args"
-#define CONFIG_SPL_FS_LOAD_KERNEL_NAME	"uImage"
-#define CONFIG_SYS_SPL_ARGS_ADDR       0x18000000
-
-/* Falcon Mode - MMC support: args@1MB kernel@2MB */
-#define CONFIG_SYS_MMCSD_RAW_MODE_ARGS_SECTOR  0x800   /* 1MB */
-#define CONFIG_SYS_MMCSD_RAW_MODE_ARGS_SECTORS (CONFIG_CMD_SPL_WRITE_SIZE / 512)
-#define CONFIG_SYS_MMCSD_RAW_MODE_KERNEL_SECTOR        0x1000  /* 2MB */
-
-#define CONFIG_SYS_FSL_USDHC_NUM	3
-
 /* I2C Configs */
 #define CONFIG_SYS_I2C
 #define CONFIG_SYS_I2C_MXC
+#define CONFIG_SYS_I2C_MXC_I2C1		/* need to enable this since adapters are into an array so addressing won't work if the previous element is not enabled*/
 #define CONFIG_SYS_I2C_MXC_I2C2		/* enable I2C bus 2 */
+#define CONFIG_SYS_I2C_MXC_I2C3		/* enable I2C bus 3 */
 #define CONFIG_SYS_I2C_SPEED		  100000
 
 /* RTC */
@@ -130,6 +120,19 @@
 #define CONFIG_MXC_USB_FLAGS		0
 #define CONFIG_USB_MAX_CONTROLLER_COUNT	1 /* Enabled USB controller number */
 #endif
+
+#if defined(CONFIG_ENV_IS_IN_MMC)
+// #define CONFIG_ENV_OFFSET		(768 * 1024)
+// #define CONFIG_SYS_MMC_ENV_DEV 	0
+#elif defined(CONFIG_ENV_IS_IN_SPI_FLASH)
+#define CONFIG_ENV_OFFSET              (512 * 1024)
+#define CONFIG_ENV_SECT_SIZE           (64 * 1024)
+#define CONFIG_ENV_SPI_BUS             CONFIG_SF_DEFAULT_BUS
+#define CONFIG_ENV_SPI_CS              CONFIG_SF_DEFAULT_CS
+#define CONFIG_ENV_SPI_MODE            CONFIG_SF_DEFAULT_MODE
+#define CONFIG_ENV_SPI_MAX_HZ          CONFIG_SF_DEFAULT_SPEED
+#endif
+
 
 
 #endif                         /* __DELTA80_CONFIG_H */
