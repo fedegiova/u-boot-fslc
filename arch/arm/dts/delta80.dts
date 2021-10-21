@@ -201,9 +201,22 @@
 	pinctrl-names = "default";
 	pinctrl-0 = <&pinctrl_enet>;
 	phy-mode = "rmii";
-	phy-reset-gpios = <&gpio7 12 0>;
+	phy-reset-gpios = <&gpio7 12 1>; //BEWARE, reset-gpio is active-low
 	phy-reset-duration = <1>;
 	status = "okay";
+
+    phy-handle = <&ethphy0>;
+
+	mdio {
+		#address-cells = <1>;
+		#size-cells = <0>;
+
+		ethphy0: ethernet-phy@0 {
+			compatible = "ethernet-phy-ieee802.3-c22";
+			reg = <0>;
+		};
+	};
+
 };
 
 &i2c1 {
