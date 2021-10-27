@@ -20,6 +20,7 @@
 #include <spi_flash.h>
 #include <splash.h>
 #include <usb.h>
+#include <mmc.h>
 
 DECLARE_GLOBAL_DATA_PTR;
 
@@ -59,6 +60,59 @@ static int splash_nand_read_raw(u32 bmp_load_addr, int offset, size_t read_size)
 static int splash_nand_read_raw(u32 bmp_load_addr, int offset, size_t read_size)
 {
 	debug("%s: nand support not available\n", __func__);
+	return -ENOSYS;
+}
+#endif
+#ifdef CONFIG_CMD_MMC
+static int splash_load_raw_mmc(struct splash_location *location, u32 bmp_load_addr)
+{
+	struct bmp_header *bmp_hdr;
+	int res;
+    unsigned int boffset,bsize;
+	size_t bmp_size;
+
+    int mmc_dev = simple_strtoul(location->devpart,NULL,16);
+	struct mmc *mmc = find_mmc_device(mmc_dev);
+	if (!mmc) {
+		printf("MMC Device %d not found\n", mmc_dev);
+		return -ENODEV;
+	}
+	if (mmc_init(mmc)) {
+		puts("MMC init failed\n");
+		return -EIO;
+    }
+
+	if (bmp_load_addr + sizeof(struct bmp_header) >= gd->start_addr_sp)
+		goto splash_address_too_high;
+
+	boffset = ALIGN(location->offset, mmc->read_bl_len) / mmc->read_bl_len;
+    bsize = round_up(sizeof(struct bmp_header),mmc->read_bl_len) / mmc->read_bl_len;
+
+	res = blk_dread(mmc_get_blk_desc(mmc), boffset, bsize, (uchar*)bmp_load_addr);
+	if (res < 0)
+		return res;
+
+	bmp_hdr = (struct bmp_header *)bmp_load_addr;
+	bmp_size = le32_to_cpu(bmp_hdr->file_size);
+
+	if (bmp_load_addr + bmp_size >= gd->start_addr_sp)
+		goto splash_address_too_high;
+
+    bsize = round_up(bmp_size,mmc->read_bl_len) / mmc->read_bl_len;
+	res = blk_dread(mmc_get_blk_desc(mmc), boffset, bsize, (uchar*)bmp_load_addr);
+    if( res < 0)
+        return res;
+    return 0;
+
+splash_address_too_high:
+	printf("Error: splashimage address too high. Data overwrites U-Boot and/or placed beyond DRAM boundaries.\n");
+
+	return -EFAULT;
+}
+#else
+static int splash_load_raw_mmc(struct splash_location *location, u32 bmp_load_addr)
+{
+	debug("%s: mmc support not available\n", __func__);
 	return -ENOSYS;
 }
 #endif
@@ -424,7 +478,12 @@ int splash_source_load(struct splash_location *locations, uint size)
 		return -EINVAL;
 
 	if (splash_location->flags == SPLASH_STORAGE_RAW)
-		return splash_load_raw(splash_location, bmp_load_addr);
+    {
+        if( splash_location->storage == SPLASH_STORAGE_MMC )
+		    return splash_load_raw_mmc(splash_location, bmp_load_addr);
+        else
+            return splash_load_raw(splash_location, bmp_load_addr);
+    }
 	else if (splash_location->flags == SPLASH_STORAGE_FS)
 		return splash_load_fs(splash_location, bmp_load_addr);
 #ifdef CONFIG_FIT
