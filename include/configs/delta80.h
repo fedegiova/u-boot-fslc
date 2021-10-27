@@ -62,7 +62,7 @@
         "bootcmd_installer=run bootargs_base; sf probe; sf read ${loadaddr} 0x82000 0x380000; sf read 0x12800000 0x400000 0x400000; bootm ${loadaddr}  0x12800000\0" \
 		"bootcmd=run bootcmd_mmc\0"                             \
         "bootcmd_mtest=sf probe; sf read  0x00907000 0x60000 0x20000;go 0x00907000\0" \
-        "bootcmd_memtest=mtest 0x11000000 0x1f000000 0 ${memtest_iter}; mark_mtest_complete $?; setenv bootargs_base \"${bootargs_base} memtest_mode cma=64M\"; run bootcmd_mmc\0"\
+        "bootcmd_memtest=lcdputs \"Memory test in progress..\"; mtest 0x11000000 0x1f000000 0 ${memtest_iter}; mark_mtest_complete $?; setenv bootargs_base \"${bootargs_base} memtest_mode cma=64M\"; run bootcmd_mmc\0"\
 
 #define CONFIG_ARP_TIMEOUT     200UL
 
