@@ -25,16 +25,19 @@
 
 /* MMC Configs */
 #define CONFIG_SYS_FSL_ESDHC_ADDR      0
-//#define CONFIG_SYS_SPI_U_BOOT_OFFS     0x400
+
+
 
 
 
 #define CONFIG_EXTRA_ENV_SETTINGS ""\
 		"console=serial\0"						\
 		"netdev=eth0\0"						\
+        "panel=Ampire\0" \
         "splashimage=0x11000000\0" \
         "splashsize=0x80000\0" \
         "splashpos=m,m\0" \
+        "splashsource=mmc_raw\0" \
 		"ethprime=FEC0\0"					\
 		"uboot=u-boot.bin\0"			\
 		"kernel=uImage\0"				\
@@ -89,6 +92,7 @@
  *	to make the driver aware of it
  * */
 #define CONFIG_SYS_LDB_CLOCK 40000000
+#define CONFIG_SYS_IPUV3_CLK 280000000
 #define CONFIG_IMX_VIDEO_SKIP
 
 #define CONFIG_USBD_HS
@@ -120,19 +124,6 @@
 #define CONFIG_MXC_USB_FLAGS		0
 #define CONFIG_USB_MAX_CONTROLLER_COUNT	1 /* Enabled USB controller number */
 #endif
-
-#if defined(CONFIG_ENV_IS_IN_MMC)
-// #define CONFIG_ENV_OFFSET		(768 * 1024)
-// #define CONFIG_SYS_MMC_ENV_DEV 	0
-#elif defined(CONFIG_ENV_IS_IN_SPI_FLASH)
-#define CONFIG_ENV_OFFSET              (512 * 1024)
-#define CONFIG_ENV_SECT_SIZE           (64 * 1024)
-#define CONFIG_ENV_SPI_BUS             CONFIG_SF_DEFAULT_BUS
-#define CONFIG_ENV_SPI_CS              CONFIG_SF_DEFAULT_CS
-#define CONFIG_ENV_SPI_MODE            CONFIG_SF_DEFAULT_MODE
-#define CONFIG_ENV_SPI_MAX_HZ          CONFIG_SF_DEFAULT_SPEED
-#endif
-
 
 
 #endif                         /* __DELTA80_CONFIG_H */

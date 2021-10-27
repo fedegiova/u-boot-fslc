@@ -855,5 +855,14 @@
 &wdog2 {
 	status = "disabled";
 };
+&ipu2 {
+    /*
+        Remember to keep the ipu2 disabled otherwise it'll break the splash screen
+        in u-boot, indeed it causes the ipuv3_probe() function to be called twice
+        during dt probe but the function it's not reentrant and it'll mess up the
+        configuration of the IPU
+    */
+	status = "disabled";
+};
 
 

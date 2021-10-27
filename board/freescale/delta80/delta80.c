@@ -34,6 +34,7 @@
 #include "../common/pfuze.h"
 #include <usb.h>
 #include <usb/ehci-ci.h>
+#include <splash.h>
 
 DECLARE_GLOBAL_DATA_PTR;
 
@@ -127,12 +128,12 @@ static void setup_spi(void) //DONE
 }
 
 iomux_v3_cfg_t const di0_pads[] = {
-	IOMUX_PADS(PAD_DI0_DISP_CLK__IPU1_DI0_DISP_CLK),	/* DISP0_CLK */
-	IOMUX_PADS(PAD_DI0_PIN2__IPU1_DI0_PIN02),		/* DISP0_HSYNC */
-	IOMUX_PADS(PAD_DI0_PIN3__IPU1_DI0_PIN03),		/* DISP0_VSYNC */
+	IOMUX_PADS(PAD_DI0_DISP_CLK__IPU1_DI0_DISP_CLK | MUX_PAD_CTRL(SPI_PAD_CTRL)),	/* DISP0_CLK */
+	IOMUX_PADS(PAD_DI0_PIN2__IPU1_DI0_PIN02 | MUX_PAD_CTRL(SPI_PAD_CTRL)),		/* DISP0_HSYNC */
+	IOMUX_PADS(PAD_DI0_PIN3__IPU1_DI0_PIN03 | MUX_PAD_CTRL(SPI_PAD_CTRL)),		/* DISP0_VSYNC */
 	//DEBUG ROUTING
-	//MX6_PAD_NANDF_CS2__CCM_CLKO2 	 | MUX_PAD_CTRL(SPI_PAD_CTRL),		/*Debug clk out 2*/
-	//MX6_PAD_GPIO_0__CCM_CLKO1 		 | MUX_PAD_CTRL(SPI_PAD_CTRL),		/*Debug clk out 1 */
+	IOMUX_PADS(PAD_NANDF_CS2__CCM_CLKO2| MUX_PAD_CTRL(SPI_PAD_CTRL)),/*Debug clk out 2*/
+	//IOMUX_PADS(PAD_GPIO_0__CCM_CLKO1   | MUX_PAD_CTRL(SPI_PAD_CTRL)),/*Debug clk out 1 */
 };
 
 static void setup_iomux_uart(void) //DONE
@@ -226,14 +227,14 @@ struct display_info_t const displays[] = {{
 } };
 size_t display_count = ARRAY_SIZE(displays);
 
-static void setup_display(void) //done
+static void setup_display(void)
 {
 	struct mxc_ccm_reg *mxc_ccm = (struct mxc_ccm_reg *)CCM_BASE_ADDR;
 	struct iomuxc *iomux = (struct iomuxc *)IOMUXC_BASE_ADDR;
 	int reg;
 
 	/* Setup HSYNC, VSYNC, DISP_CLK for debugging purposes */
-	/*imx_iomux_v3_setup_multiple_pads(di0_pads, ARRAY_SIZE(di0_pads));*/
+	//SETUP_IOMUX_PADS(di0_pads);
 
 	/* The row below set the PFD0 to 280MHz
 	 * which divided by 7 yeld exaclty 40MHz for
@@ -294,57 +295,60 @@ static void setup_display(void) //done
 	    | (IOMUXC_GPR3_MUX_SRC_IPU1_DI0
 	       << IOMUXC_GPR3_LVDS0_MUX_CTL_OFFSET);
 	writel(reg, &iomux->gpr[3]);
-#if 0 //sabresd
-	/* Setup HSYNC, VSYNC, DISP_CLK for debugging purposes */
-	SETUP_IOMUX_PADS(di0_pads);
-
-	enable_ipu_clock();
-	imx_setup_hdmi();
-
-	/* Turn on LDB0, LDB1, IPU,IPU DI0 clocks */
-	reg = readl(&mxc_ccm->CCGR3);
-	reg |=  MXC_CCM_CCGR3_LDB_DI0_MASK | MXC_CCM_CCGR3_LDB_DI1_MASK;
-	writel(reg, &mxc_ccm->CCGR3);
-
-	/* set LDB0, LDB1 clk select to 011/011 */
-	reg = readl(&mxc_ccm->cs2cdr);
-	reg &= ~(MXC_CCM_CS2CDR_LDB_DI0_CLK_SEL_MASK
-		 | MXC_CCM_CS2CDR_LDB_DI1_CLK_SEL_MASK);
-	reg |= (3 << MXC_CCM_CS2CDR_LDB_DI0_CLK_SEL_OFFSET)
-	      | (3 << MXC_CCM_CS2CDR_LDB_DI1_CLK_SEL_OFFSET);
-	writel(reg, &mxc_ccm->cs2cdr);
-
-	reg = readl(&mxc_ccm->cscmr2);
-	reg |= MXC_CCM_CSCMR2_LDB_DI0_IPU_DIV | MXC_CCM_CSCMR2_LDB_DI1_IPU_DIV;
-	writel(reg, &mxc_ccm->cscmr2);
-
-	reg = readl(&mxc_ccm->chsccdr);
-	reg |= (CHSCCDR_CLK_SEL_LDB_DI0
-		<< MXC_CCM_CHSCCDR_IPU1_DI0_CLK_SEL_OFFSET);
-	reg |= (CHSCCDR_CLK_SEL_LDB_DI0
-		<< MXC_CCM_CHSCCDR_IPU1_DI1_CLK_SEL_OFFSET);
-	writel(reg, &mxc_ccm->chsccdr);
-
-	reg = IOMUXC_GPR2_BGREF_RRMODE_EXTERNAL_RES
-	     | IOMUXC_GPR2_DI1_VS_POLARITY_ACTIVE_LOW
-	     | IOMUXC_GPR2_DI0_VS_POLARITY_ACTIVE_LOW
-	     | IOMUXC_GPR2_BIT_MAPPING_CH1_SPWG
-	     | IOMUXC_GPR2_DATA_WIDTH_CH1_18BIT
-	     | IOMUXC_GPR2_BIT_MAPPING_CH0_SPWG
-	     | IOMUXC_GPR2_DATA_WIDTH_CH0_18BIT
-	     | IOMUXC_GPR2_LVDS_CH0_MODE_DISABLED
-	     | IOMUXC_GPR2_LVDS_CH1_MODE_ENABLED_DI0;
-	writel(reg, &iomux->gpr[2]);
-
-	reg = readl(&iomux->gpr[3]);
-	reg = (reg & ~(IOMUXC_GPR3_LVDS1_MUX_CTL_MASK
-			| IOMUXC_GPR3_HDMI_MUX_CTL_MASK))
-	    | (IOMUXC_GPR3_MUX_SRC_IPU1_DI0
-	       << IOMUXC_GPR3_LVDS1_MUX_CTL_OFFSET);
-	writel(reg, &iomux->gpr[3]);
-#endif
 }
-#endif /* CONFIG_VIDEO_IPUV3 */
+#ifdef CONFIG_SPLASH_SCREEN
+static struct splash_location default_splash_locations[] = {
+	{
+		.name		= "mmc_raw",
+		.storage	= SPLASH_STORAGE_MMC,
+		.flags		= SPLASH_STORAGE_RAW,
+		.devpart	= "0:0",
+		.offset   	= 9*1024*1024,
+	},
+};
+
+int splash_screen_prepare(void)
+{
+	return splash_source_load(default_splash_locations,
+				  ARRAY_SIZE(default_splash_locations));
+}
+//int splash_screen_prepare(void)
+//{
+//	int mmc_dev = 0;
+//	ulong offset = 9*1024*1024;
+//	ulong size = 1*1024*1024;
+//	ulong addr = 0;
+//	char *s = NULL;
+//	struct mmc *mmc = find_mmc_device(mmc_dev);
+//	uint blk_start, blk_cnt, n;
+//
+//	s = env_get("splashimage");
+//
+//	if (NULL == s) {
+//		puts("env splashimage not found!\n");
+//		return -1;
+//	}
+//	addr = simple_strtoul(s, NULL, 16);
+//
+//	if (!mmc) {
+//		printf("MMC Device %d not found\n", mmc_dev);
+//		return -1;
+//	}
+//
+//	if (mmc_init(mmc)) {
+//		puts("MMC init failed\n");
+//		return -1;
+//	}
+//
+//	blk_start = ALIGN(offset, mmc->read_bl_len) / mmc->read_bl_len;
+//	blk_cnt   = ALIGN(size, mmc->read_bl_len) / mmc->read_bl_len;
+//	n = blk_dread(mmc_get_blk_desc(mmc), blk_start, blk_cnt, (uchar*)addr);
+//	//flush_cache((ulong)addr, blk_cnt * mmc->read_bl_len);
+//
+//	return (n == blk_cnt) ? 0 : -1;
+//}
+#endif //CONFIG_SPLASH_SCREEN
+#endif //CONFIG_VIDEO_IPUV3
 
 
 #ifdef CONFIG_USB_EHCI_MX6
@@ -644,17 +648,22 @@ static int delta80r1_dcd_table[] = {
     0x021b001c, 0x00000000,
 
 
-    /*
-     * Setup CCM_CCOSR register as follows:
-     *
-     * cko1_en  = 1	   --> CKO1 enabled
-     * cko1_div = 111  --> divide by 8
-     * cko1_sel = 1011 --> ahb_clk_root
-     *
-     * This sets CKO1 at ahb_clk_root/8 = 132/8 = 16.5 MHz
-     */
-    //TODO controlla questa
-    0x020c4060, 0x000000fb,
+   /*
+    * Setup CCM_CCOSR register as follows (debug clock divisor):
+    *
+    * cko1_en  = 1	   --> CKO1 enabled
+    * cko1_div = 111  --> divide by 8
+    * cko1_sel = 1011 --> ahb_clk_root
+    *
+    * This sets CKO1 at ahb_clk_root/8 = 132/8 = 16.5 MHz
+    */
+    /*0x020c4060, 0x000000fb,*/
+    /**
+    *	Clock debug: (NAND_CS2 and PCIE_ENABLE on the board)
+    *	IPU_1_DI0 		-> OUT2
+    *	LDB_DI0_SERIAL	-> OUT1
+    */
+    //0x020c4060, 0x1F800F7
 };
 
 static void ddr_init(int *table, int size)
