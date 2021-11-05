@@ -42,14 +42,16 @@
 		"uboot=u-boot.bin\0"			\
 		"kernel=uImage\0"				\
         "ipaddr=172.31.4.253\0"\
+        "serverip=172.31.4.2\0"\
         "netmask=255.255.255.0\0"\
         "ethaddr=00:0C:0C:A0:02:b5\0"   \
         "memtest_iter=50\0"   \
-		"nfsroot=/home/federico/ltib/ltib/rootfs\0"				\
+		"nfsroot=/home/fede/rootfs\0"				\
+		"linuxeth=eth1\0"				\
 		"bootargs_base=setenv bootargs console=ttymxc0,115200 video=mxcfb0:dev=ldb,LDB-SVGA,if=RGB666 ldb=sin0 vmalloc=192M setenv vram=1:3M,2:3M,3:3M,4:3M,5:3M\0"\
 		"bootargs_nfs=setenv bootargs ${bootargs} root=/dev/nfs "\
-		"ip=${ipaddr}:${serverip}:${gateway}:255.255.0.0:delta80:eth1 nfsroot=${serverip}:${nfsroot},v3,tcp\0"\
-		"bootcmd_net=run bootargs_base bootargs_nfs; "		\
+		"ip=172.31.4.4:${serverip}:${gateway}:255.255.0.0:delta80:${linuxeth} nfsroot=${serverip}:${nfsroot},v3,tcp\0"\
+		"bootcmd_net=usb start;setenv ethact asix_eth; run bootargs_base bootargs_nfs; "		\
 		"tftpboot ${loadaddr} ${kernel}; bootm\0"	\
 		"bootargs_mmc=setenv bootargs ${bootargs}"     \
 		" root=/dev/mmcblk0p1 rootwait ip=none enable_wait_mode=off\0"                \
